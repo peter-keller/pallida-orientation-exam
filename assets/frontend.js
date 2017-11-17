@@ -1,14 +1,24 @@
 'use strict'
-console.log("testme");
 
 var xhr = new XMLHttpRequest();
-var table = document.querySelector('section table');
-var url = 'http://localhost:8080/search?q=';
+var url = 'http://localhost:8080';
+
 var button = document.querySelector('button');
 var search = document.querySelector('input');
+var police = document.getElementById('police');
+var diplomat = document.getElementById('diplomat')
+var table = document.querySelector('table');
 
 
 function appendTable(result){
+  table.innerHTML = `<tr>
+                      <th>License Plate</th>
+                      <th>Car Brand</th> 
+                      <th>Car Model</th>
+                      <th>Color</th>
+                      <th>Year</th>
+                    </tr>
+  `
   result.forEach(function(element) {
     const markup = `<tr>
                       <td>${element.plate}</td>
@@ -16,7 +26,8 @@ function appendTable(result){
                       <td>${element.car_model}</td>
                       <td>${element.color}</td>
                       <td>${element.year}</td>
-                    </tr>`
+                    </tr>
+    `
     table.innerHTML += markup;
   }, this);
 };
@@ -25,8 +36,7 @@ function appendTable(result){
 function ajax (method, url, callback) {
   xhr.addEventListener("readystatechange", function () {
     if (this.readyState === 4) {
-      var requestAPI = JSON.parse(xhr.response);
-      callback(requestAPI);
+      callback(JSON.parse(xhr.response));
     };
   });
   xhr.open(method, url);
@@ -36,13 +46,19 @@ function ajax (method, url, callback) {
 };
 
 
-
 button.addEventListener('click', function () {
-  var url = 'http://localhost:8080/search?q=';
+  var url = 'http://localhost:8080';
   url += search.value;
   ajax('GET', url, appendTable)
 });
 
+police.addEventListener('click', function() {
+
+});
+
+diplomat.addEventListener('click', function() {
+
+});
 
 
-ajax('GET', 'http://localhost:8080/search?q=MXS-803', appendTable);
+ajax('GET', 'http://localhost:8080', appendTable);
