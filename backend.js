@@ -42,9 +42,8 @@ app.get('/search?', function(request, response) {
 });
 
 app.get('/search/:brand', function(request, response) {
-    console.log(request.params.brand)
-    var dataAccess = 'SELECT * FROM licence_plates;'
-    if (dataAccess.car_brand == request.params.brand) {
+    var queryString = 'SELECT * FROM licence_plates;'
+    if (request.params.brand) {
         var queryString = `SELECT * FROM licence_plates WHERE car_brand = '${request.params.brand}'`
     } else {
         var queryString = 'SELECT * FROM licence_plates;'
