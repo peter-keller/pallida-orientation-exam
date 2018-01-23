@@ -1,3 +1,4 @@
+
 create table licence_plates (
 	plate VARCHAR(50),
 	car_brand VARCHAR(50),

@@ -1,67 +1,98 @@
-'use strict';
+[]
+'use strict'
 
 var express = require('express');
+var cors = require('cors');
 var mysql = require('mysql');
 var app = express();
 
 app.use(express.json());
-app.use(express.static('/assets/frontend'));
-app.use('/assets', express.static('./assets'));
-
+app.use(express.static('./assets'));
+app.use(cors());
 
 var connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'ridata94',
-  database: 'licence_plates'
-  });
-
-
-connection.connect(function(err){
-  if (err) {
-    console.log("Cannot connect to database");
-  } else { 
-    console.log("Connection estabilished");
-}});
-
-
-app.get('/', function(request, response) {
-  response.sendFile(__dirname + '/assets/index.html');
+ host: 'localhost',
+ user: 'root',
+ password: 'root',
+ database: 'licence_plates'
 });
 
+connection.connect();
 
-app.get('/search', function(request, response) {
-  console.log(request.query.q);
-  if (request.query.q) {
-    var queryString = `SELECT * FROM licence_plates WHERE plate = '${request.query.q}'`;
-  } else {
-    var queryString = 'SELECT * FROM licence_plates;'
-  };
-  connection.query(queryString, function(err, result) {
-  if (err) {
-    console.log(err.toString());
-  };
-  response.send(result);
-});
+app.get('/', function(req, res) {
+ res.sendFile(__dirname + '/assets/index.html');
 });
 
-
-app.get('/search/:brand', function(request, response) {
-  var queryString = 'SELECT * FROM licence_plates;'
-  console.log(request.params.brand);
-  if (request.params.brand) {
-    var queryString = `SELECT * FROM licence_plates WHERE car_brand = '${request.params.brand}'`
-  } else {
-    var queryString = 'SELECT * FROM licence_plates;'
-  };
-  connection.query(queryString, function(err, result) {
-    if (err) {
-      console.log(err.toString());
-    };
-  response.send(result);
-  });
+app.get('/search/:brand', function(req, res) {
+ var data = [];
+ var queryString = `SELECT * FROM licence_plates WHERE car_brand='${req.params.brand}'`;
+ connection.query(queryString, function(err, result, fileds) {
+   result.forEach(function(element){
+     data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+   });
+   res.send({'result': 'OK', 'cars': data});
+ });
 });
 
+app.get('/all', function(req, res) {
+ var data = [];
+ var queryString = `SELECT * FROM licence_plates`;
+ connection.query(queryString, function(err, result, fileds) {
+   result.forEach(function(element){
+     data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+   });
+   res.send({'result': 'OK', 'cars': data});
+ });
+});
 
+app.get('/search', function(req, res) {
+ var data = [];
+ var licenceOK = true;
+   var queryString = `SELECT * FROM licence_plates`
+   connection.query(queryString, function(err, result, fileds) {
+     result.forEach(function(element){
+       if (req.query.q) {
+         licenceOK = licenceCheck(req.query.q);
+         if (req.query.police === '1') {
+           if (element.plate.includes(req.query.q) && element.plate.slice(0, 2).includes('RB')) {
+             data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+           }
+         } else if (req.query.diplomat === '1') {
+           if (element.plate.includes(req.query.q) && element.plate.slice(0, 2).includes('DT')) {
+             data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+           }
+         } else {
+           if (element.plate.includes(req.query.q)) {
+             data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+           }
+         }
+       } else {
+           if (req.query.police === '1') {
+             if (element.plate.slice(0, 2).includes('RB')) {
+               data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+             }
+           } else if (req.query.diplomat === '1') {
+             if (element.plate.slice(0, 2).includes('DT')) {
+               data.push({'licence': element.plate, 'brand': element.car_brand, 'model': element.car_model, 'year': element.year, 'color': element.color});
+             }
+           }
+       }
+     });
+     if (licenceOK) {
+       res.send({'result': 'OK', 'cars': data});
+     } else {
+       res.send({'result': 'wrong'});
+     }
+   });
+});
 
-app.listen(8080,  () => console.log('Running'));
+function licenceCheck (plate) {
+ var temp = plate.replace(/[^a-zA-Z0-9-]/g, "");
+ if (temp.localeCompare(plate) === 0) {
+   return true;
+ } else {
+   return false;
+ }
+}
+
+app.listen(8080, () => console.log('Running'));
